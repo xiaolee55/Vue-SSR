@@ -1,0 +1,12 @@
+// es6 compile to es5 相关配置
+{
+  "presets": [
+    [
+      "env",
+      {
+        "modules": false
+      }
+    ]
+  ],
+  "plugins": ["syntax-dynamic-import"]
+}
