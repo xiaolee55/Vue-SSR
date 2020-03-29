@@ -1,3 +1,6 @@
+// entry-server.js 作为服务器入口，最终经过 VueSSRServerPlugin 插件，
+// 编译成 vue-ssr-server-bundle.json 供 vue-server-renderer 调用
+// entry-server.js
 import { createApp } from './app';
 
 export default context => {
@@ -5,7 +8,7 @@ export default context => {
   // 以便服务器能够等待所有的内容在渲染前，
   // 就已经准备就绪。
   return new Promise((resolve, reject) => {
-    const { app, router } = createApp(context);
+    const { app, router, store } = createApp(context);
 
     // 设置服务器端 router 的位置
     router.push(context.url);
@@ -19,7 +22,21 @@ export default context => {
         return reject({ code: 404 });
       }
 
-      resolve(app);
+      Promise.all(
+        matchedComponents.map(component => {
+          if (component.asyncData) {
+            return component.asyncData({
+              store,
+              route: router.currentRoute
+            });
+          }
+        })
+      ).then(() => {
+        context.state = store.state
+        // Promise 应该 resolve 应用程序实例，以便它可以渲染
+        resolve(app);
+      });
     });
   });
 };
+
